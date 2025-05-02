@@ -44,9 +44,10 @@ from pathlib import Path
 import itertools
 import torch
 from torch import Tensor
-from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 import wandb
+import numpy as np
+import pulp as pl
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -60,7 +61,6 @@ from reward.reward import compute_reward
 MODEL_MAP = {
     "v1": GFlownetv3,
 }
-
 # ────────────────────────────────────────────────────────────────────────────────
 # Utility helpers
 # ────────────────────────────────────────────────────────────────────────────────
@@ -73,27 +73,21 @@ def select_device() -> torch.device:
         return torch.device("mps")
     return torch.device("cpu")
 
-def prepare_tensors(data: Dict[str, torch.Tensor], batch_size: int, device: torch.device) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
-    """Expand 1‑D data arrays to batched tensors on the chosen *device*."""
-    u = torch.tensor(data["u"], dtype=torch.float32, device=device).expand(batch_size, -1)
-    t = torch.tensor(data["t"], dtype=torch.float32, device=device).expand(batch_size, -1)
-    B = torch.tensor(data["B"], dtype=torch.float32, device=device).view(1, 1).expand(batch_size, 1)
-    return u.detach(), t.detach(), B.detach(), u.size(1)
-
 # ────────────────────────────────────────────────────────────────────────────────
 # Training loop
 # ────────────────────────────────────────────────────────────────────────────────
 
-def train(cfg):
+def solve(u_vals, t_vals, B_val, cfg):
     # device
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = select_device()
+
+    u = np.array(data["u"], dtype=np.float32).flatten()
+    t = np.array(data["t"], dtype=np.float32).flatten()
+    B = np.array(data["B"], dtype=np.float32).item()
+    num_items = u.shape[0]
 
     # prepare batch data (repeat instance)
     batch_size = cfg.batch_size
-    u = torch.tensor(u_vals, dtype=torch.float32, device=device).unsqueeze(0).expand(batch_size, -1)
-    t = torch.tensor(t_vals, dtype=torch.float32, device=device).unsqueeze(0).expand(batch_size, -1)
-    B = torch.tensor([[B_val]], dtype=torch.float32, device=device).expand(batch_size, 1)
-    num_items = u.size(1)
 
     # instantiate models once
     ModelCls = MODEL_MAP[cfg.model_version]
@@ -109,16 +103,103 @@ def train(cfg):
     optimizer_ac = torch.optim.SGD(actor.parameters(), lr=cfg.lr_ac)
     optimizer_cr = torch.optim.SGD(critic.parameters(), lr=cfg.lr_cr)
 
-    # initialize Benders cuts
-    cuts: list[tuple[Tensor, float]] = []
-    first_cut = benders_master(u_vals, t_vals, B_val, cuts)
-    if first_cut:
-        cuts.append(first_cut)
+    # Initialisation du master problem (sans contraintes (4c))
+    iteration = 0
+    master = pl.LpProblem('CPP_value_function', pl.LpMaximize)
 
+    indices = list(range(num_items))
+    #Variables du master
+    x = pl.LpVariable.dicts('x', indices, cat='Binary')
+    s = pl.LpVariable.dicts('s', indices, lowBound=0)
+    L = pl.LpVariable('L')
+
+    M = u.copy()
+
+    t_ma = {}
+    for i in indices:
+        if t[i] == 5:
+            t_ma[i] = pl.LpVariable(f't_{i}', lowBound=0, upBound=M[i])
+        else:
+            t_ma[i] = t[i]
+
+    # McCormick envelope
+    for i in indices:
+        master += s[i] <= t[i]
+        master += s[i] <= M[i] * x[i]
+        master += t[i] - s[i] <= M[i] * (1 - x[i])
+
+    # Objective
+    master += pl.lpSum(s[i] for i in indices), 'Leader_Revenue'
+
+    # Budget constraint
+    master += pl.lpSum(s[i] for i in indices) <= B
+
+    #contrainte 4c
+    master += pl.lpSum(u[i] * x[i] - s[i] for i in indices) == L
+
+    #first cut
+    master += L >= 0
+
+    while True:
+        iteration += 1
+        master.solve()
+        
+        # Récupère solution actuelle
+        t_sol = np.array([t[i].varValue if isinstance(t[i], pl.LpVariable) else t[i] for i in indices])
+        x_sol = np.array([x[i].varValue for i in indices])
+        L_sol = L.varValue
+        
+        # Résout follower problem via solver_with_traj
+        follower_val_t, x_hat_sol = train_model(u_vals=u, t_vals=t_sol, B_val=B, epochs=cfg.num_epochs, batch_size=batch_size, actor=actor, critic=critic, device=device)
+        exit()
+        
+        # Calcul des valeurs
+        master_val = np.sum((u - t_sol) * x_sol)
+        
+        follower_val = np.sum((u - t_sol) * x_hat_sol)
+        print("-------------")
+        print(follower_val)
+        print(follower_val_t)
+        print(master_val)
+        print(L.varValue)
+
+        print("-------------")
+        print(x_hat_sol)
+        print(x_sol)
+
+        print("-------------")
+        print(t_sol)
+        print(u)
+
+
+
+
+        print(f"Iteration {iteration} → Master: {master_val:.4f}, Follower: {follower_val:.4f}")
+        
+        # Vérifie faisabilité bilevel
+        if follower_val > master_val:
+            print("→ Adding new constraint from follower.")
+            master += L >= follower_val
+        else:
+            print("→ Bilevel feasible solution found.")
+            break
+
+
+
+
+def train_model(u_vals, t_vals, B_val, epochs, batch_size, actor, critic, device):
+    print(f"🚀 Starting training on device: {device} for {epochs} epochs\n")
     # training loop
     global_step = 0
-    for epoch in range(1, cfg.num_epochs + 1):
-        actor.train(); critic.train()
+
+    u_tensor, t_tensor, B_tensor, num_items = prepare_tensors(u_vals, t_vals, B_val, batch_size, device)
+    
+    for epoch in range(1, epochs + 1):
+
+        logp_cand, selected_cand = actor.generate_trajectories(B_tensor, u_tensor, t_tensor, batch_size, num_items, device)
+        print(logp_cand.shape, logp_cand)
+        print(selected_cand.shape, selected_cand)
+        exit()
         optimizer.zero_grad()
 
         # generate trajectories
@@ -164,6 +245,15 @@ def train(cfg):
     return actor, critic, cuts
 
 
+def prepare_tensors(u: np.ndarray, t: np.ndarray, B: np.ndarray, batch_size: int, device) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
+    """Expand 1‑D data arrays to batched tensors on the chosen *device*."""
+    u_tensor = torch.tensor(u, dtype=torch.float32, device=device).expand(batch_size, -1)
+    t_tensor = torch.tensor(t, dtype=torch.float32, device=device).expand(batch_size, -1)
+    B_tensor = torch.tensor(B, dtype=torch.float32, device=device).view(1, 1).expand(batch_size, 1)
+    return u_tensor.detach(), t_tensor.detach(), B_tensor.detach(), u_tensor.size(1)
+
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Bi-level GFlowNet Training")
     parser.add_argument('--data_path', type=str, default='data/data.pickle')
@@ -171,13 +261,16 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, default=300)
     parser.add_argument('--embedding_dim', type=int, default=150)
     parser.add_argument('--hidden_dim', type=int, default=360)
-    parser.add_argument('--lr', type=float, default=1e-3)
+    
+    parser.add_argument('--lr_ac', type=float, default=1e-3)
+    parser.add_argument('--lr_cr', type=float, default=1e-3)
 
     parser.add_argument('--penalty_weight', type=float, default=1.0)
     parser.add_argument('--cut_interval', type=int, default=50)
     parser.add_argument('--log_interval', type=int, default=10)
 
     parser.add_argument('--log_dir', type=str, default='runs')
+    parser.add_argument('--model_version', type=str, default='v1')
     cfg = parser.parse_args()
 
     # load instance
@@ -187,4 +280,4 @@ if __name__ == '__main__':
         data = pickle.load(f)
     u_vals, t_vals, B_val = data['u'], data['t'], data['B']
 
-    train(u_vals, t_vals, B_val, cfg)
+    solve(u_vals, t_vals, B_val, cfg)

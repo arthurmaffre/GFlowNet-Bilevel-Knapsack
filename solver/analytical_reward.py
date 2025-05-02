@@ -27,7 +27,8 @@ def compute_analytical_reward(
     # vecteur des gains marginaux
     marg = u_arr - t_arr
     n = len(marg)
-    max_r = float("-inf")
+    max_r = float("0")
+    
 
     # Parcours de toutes les combinaisons
     for k in range(n + 1):
@@ -39,3 +40,24 @@ def compute_analytical_reward(
                     max_r = reward
 
     return max_r
+
+
+
+if __name__ == "__main__":
+    # Petit test direct : charge le pickle et affiche la valeur max trouvée
+    
+    import pickle
+    
+    # Charge le pickle
+    with open("data/data.pickle", "rb") as f:
+        data = pickle.load(f)
+
+    u = data['u']
+    t = data['t']
+    B = data['B']
+
+    # Appelle compute_analytical_reward
+    reward = compute_analytical_reward(u, t, B)
+
+    # Affiche le résultat
+    print(f"Max reward from analytical knapsack: {reward:.4f}")

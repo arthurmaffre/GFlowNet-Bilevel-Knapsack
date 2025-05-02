@@ -106,12 +106,11 @@ class Critic(nn.Module):
     ) -> None:
         super().__init__()
         # reuse embeddings
-        self.embed_sel = nn.Linear(num_items, embedding_dim)
         self.embed_B   = nn.Linear(1, embedding_dim)
         self.embed_u   = nn.Linear(num_items, embedding_dim)
         self.embed_t   = nn.Linear(num_items, embedding_dim)
         # critic MLP
-        dims = [4 * embedding_dim, hidden_dim,
+        dims = [3 * embedding_dim, hidden_dim,
                 hidden_dim // 2, hidden_dim // 4, hidden_dim // 8]
         layers = []
         for d_in, d_out in zip(dims[:-1], dims[1:]):
@@ -126,17 +125,15 @@ class Critic(nn.Module):
 
     def forward(
         self,
-        selected: Tensor,    # (B, n)
-        remaining_B: Tensor, # (B, 1)
-        u: Tensor,           # (B, n)
-        t: Tensor,           # (B, n)
+        B: Tensor, # (B)
+        u: Tensor,           # (num_items)
+        t: Tensor,           # (num_items)
     ) -> Tensor:
         """Predict log Z scalar for each sample."""
-        sel_emb = F.relu(self.embed_sel(selected))
-        B_emb   = F.relu(self.embed_B(remaining_B))
+        B_emb   = F.relu(self.embed_B(B))
         u_emb   = F.relu(self.embed_u(u))
         t_emb   = F.relu(self.embed_t(t))
-        h = torch.cat((sel_emb, B_emb, u_emb, t_emb), dim=1)
+        h = torch.cat((B_emb, u_emb, t_emb), dim=1)
         for layer in self.mlp_stack:
             h = layer(h)
         return self.head(h).squeeze(-1)
