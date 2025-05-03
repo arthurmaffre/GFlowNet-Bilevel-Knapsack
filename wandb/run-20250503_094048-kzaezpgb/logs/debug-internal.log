@@ -1,0 +1,7 @@
+{"time":"2025-05-03T09:40:48.351891-04:00","level":"INFO","msg":"stream: starting","core version":"0.19.10","symlink path":"/Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/wandb/run-20250503_094048-kzaezpgb/logs/debug-core.log"}
+{"time":"2025-05-03T09:40:48.519029-04:00","level":"INFO","msg":"created new stream","id":"kzaezpgb"}
+{"time":"2025-05-03T09:40:48.519063-04:00","level":"INFO","msg":"stream: started","id":"kzaezpgb"}
+{"time":"2025-05-03T09:40:48.519074-04:00","level":"INFO","msg":"writer: Do: started","stream_id":"kzaezpgb"}
+{"time":"2025-05-03T09:40:48.519088-04:00","level":"INFO","msg":"handler: started","stream_id":"kzaezpgb"}
+{"time":"2025-05-03T09:40:48.519141-04:00","level":"INFO","msg":"sender: started","stream_id":"kzaezpgb"}
+{"time":"2025-05-03T09:40:48.8167-04:00","level":"INFO","msg":"Starting system monitor"}

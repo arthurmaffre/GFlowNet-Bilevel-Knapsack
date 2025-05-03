@@ -77,29 +77,13 @@ while True:
     master_val = np.sum((u - t_sol) * x_sol)
     
     follower_val = np.sum((u - t_sol) * x_hat_sol)
-    print("-------------")
-    print(follower_val)
-    print(follower_val_t)
-    print(master_val)
-    print(L.varValue)
-
-    print("-------------")
-    print(x_hat_sol)
-    print(x_sol)
-
-    print("-------------")
-    print(t_sol)
-    print(u)
-
-
-
 
     print(f"Iteration {iteration} → Master: {master_val:.4f}, Follower: {follower_val:.4f}")
     
     # Vérifie faisabilité bilevel
     if follower_val > master_val:
         print("→ Adding new constraint from follower.")
-        master += L >= follower_val
+        master += pl.lpSum(u[i] * x[i] - s[i] for i in indices) >= follower_val
     else:
         print("→ Bilevel feasible solution found.")
         break

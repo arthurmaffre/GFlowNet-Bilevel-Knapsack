@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/train.py", line 357, in <module>
+    master_val, follower_val, iteration, start_time = solve(u_vals, t_vals, B_val, cfg)
+                                                      ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/train.py", line 85, in solve
+    u = np.array([np.array(row, dtype=np.float32) for row in df['u']])
+                                                             ^^
+NameError: name 'df' is not defined

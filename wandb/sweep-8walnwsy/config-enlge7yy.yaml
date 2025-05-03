@@ -1,0 +1,20 @@
+wandb_version: 1
+
+batch_size:
+  value: 142
+data_path:
+  value: data/data.pickle
+embedding_dim:
+  value: 192
+hidden_dim:
+  value: 550
+lr_ac:
+  value: 0.0240120533610567
+lr_cr:
+  value: 0.007938925518114133
+mom_ac:
+  value: 0.5120135632961311
+mom_cr:
+  value: 0.48193862311860025
+num_epochs:
+  value: 63

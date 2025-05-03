@@ -1,0 +1,52 @@
+_wandb:
+    value:
+        cli_version: 0.19.10
+        m: []
+        python_version: 3.13.2
+        t:
+            "1":
+                - 1
+                - 55
+            "2":
+                - 1
+                - 55
+            "3":
+                - 16
+                - 23
+                - 55
+            "4": 3.13.2
+            "5": 0.19.10
+            "8":
+                - 5
+            "12": 0.19.10
+            "13": darwin-arm64
+batch_size:
+    value: 128
+cut_interval:
+    value: 50
+data_path:
+    value: data/data.parquet
+embedding_dim:
+    value: 150
+hidden_dim:
+    value: 360
+log_dir:
+    value: runs
+log_interval:
+    value: 10
+lr_ac:
+    value: 0.001
+lr_cr:
+    value: 0.001
+model_version:
+    value: v1
+mom_ac:
+    value: 0.8
+mom_cr:
+    value: 0.5
+num_epochs:
+    value: 50
+penalty_weight:
+    value: 1
+wandb_project:
+    value: Bi-level GFlowNet Training

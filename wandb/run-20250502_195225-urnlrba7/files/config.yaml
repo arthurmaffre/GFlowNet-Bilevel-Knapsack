@@ -1,0 +1,74 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    python_version: 3.13.2
+    cli_version: 0.19.10
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1746229945
+    t:
+      1:
+      - 1
+      - 55
+      2:
+      - 1
+      - 55
+      3:
+      - 2
+      - 14
+      - 16
+      - 23
+      - 37
+      4: 3.13.2
+      5: 0.19.10
+      8:
+      - 5
+      13: darwin-arm64
+wandb_project:
+  desc: null
+  value: Bi-level GFlowNet Training
+data_path:
+  desc: null
+  value: data/data.pickle
+batch_size:
+  desc: null
+  value: 66
+num_epochs:
+  desc: null
+  value: 36
+embedding_dim:
+  desc: null
+  value: 190
+hidden_dim:
+  desc: null
+  value: 532
+lr_ac:
+  desc: null
+  value: 0.008292195147439852
+lr_cr:
+  desc: null
+  value: 0.0007017728318649098
+mom_ac:
+  desc: null
+  value: 0.7353366477676344
+mom_cr:
+  desc: null
+  value: 0.48625106948024543
+penalty_weight:
+  desc: null
+  value: 1.0
+cut_interval:
+  desc: null
+  value: 50
+log_interval:
+  desc: null
+  value: 10
+log_dir:
+  desc: null
+  value: runs
+model_version:
+  desc: null
+  value: v1

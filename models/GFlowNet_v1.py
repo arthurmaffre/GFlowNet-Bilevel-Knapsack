@@ -67,6 +67,7 @@ class GFlowNet(nn.Module):
         Sample a batch of trajectories and return (sequence_logp, selected).
         """
         # fixed embeddings
+
         u_emb = F.relu(self.embed_u(u))
         t_emb = F.relu(self.embed_t(t))
         selected = torch.full((batch_size, num_items), -1.0, device=device)

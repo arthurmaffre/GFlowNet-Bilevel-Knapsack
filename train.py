@@ -44,10 +44,11 @@ from pathlib import Path
 import itertools
 import torch
 from torch import Tensor
-from tqdm import tqdm
+from tqdm.auto import trange
 import wandb
 import numpy as np
 import pulp as pl
+import time
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -56,6 +57,7 @@ import pulp as pl
 
 from models.GFlowNet_v1 import Critic, compute_loss, GFlowNet as GFlownetv3 
 from reward.reward import compute_reward
+from solver.solver_with_traj import compute_analytical_reward
 
 # Mapping from CLI flag to concrete class
 MODEL_MAP = {
@@ -100,8 +102,8 @@ def solve(u_vals, t_vals, B_val, cfg):
                     hidden_dim=cfg.hidden_dim).to(device)
 
     # optimizers
-    optimizer_ac = torch.optim.SGD(actor.parameters(), lr=cfg.lr_ac)
-    optimizer_cr = torch.optim.SGD(critic.parameters(), lr=cfg.lr_cr)
+    optimizer_ac = torch.optim.SGD(actor.parameters(), lr=cfg.lr_ac, momentum=cfg.mom_ac)
+    optimizer_cr = torch.optim.SGD(critic.parameters(), lr=cfg.lr_cr, momentum=cfg.mom_cr)
 
     # Initialisation du master problem (sans contraintes (4c))
     iteration = 0
@@ -124,9 +126,9 @@ def solve(u_vals, t_vals, B_val, cfg):
 
     # McCormick envelope
     for i in indices:
-        master += s[i] <= t[i]
+        master += s[i] <= t_ma[i]
         master += s[i] <= M[i] * x[i]
-        master += t[i] - s[i] <= M[i] * (1 - x[i])
+        master += t_ma[i] - s[i] <= M[i] * (1 - x[i])
 
     # Objective
     master += pl.lpSum(s[i] for i in indices), 'Leader_Revenue'
@@ -139,20 +141,22 @@ def solve(u_vals, t_vals, B_val, cfg):
 
     #first cut
     master += L >= 0
-
+    tolerance = 1e-4
+    no_cut_streak = 0        # ← NEW
+    start_time = time.time()
     while True:
         iteration += 1
         master.solve()
         
         # Récupère solution actuelle
-        t_sol = np.array([t[i].varValue if isinstance(t[i], pl.LpVariable) else t[i] for i in indices])
+        t_sol = np.array([t_ma[i].varValue if isinstance(t_ma[i], pl.LpVariable) else t_ma[i] for i in indices])
         x_sol = np.array([x[i].varValue for i in indices])
         L_sol = L.varValue
         
         # Résout follower problem via solver_with_traj
-        follower_val_t, x_hat_sol = train_model(u_vals=u, t_vals=t_sol, B_val=B, epochs=cfg.num_epochs, batch_size=batch_size, actor=actor, critic=critic, device=device)
-        exit()
-        
+        follower_val_t, x_hat_sol = train_model(u_vals=u, t_vals=t_sol, B_val=B, epochs=cfg.num_epochs, batch_size=batch_size, actor=actor, critic=critic, optimizer_ac=optimizer_ac, optimizer_cr=optimizer_cr, device=device)
+        #follower_val_t_an, x_hat_sol_an = compute_analytical_reward(u_vals=u, t_vals=t_sol, B_val=B)
+
         # Calcul des valeurs
         master_val = np.sum((u - t_sol) * x_sol)
         
@@ -171,99 +175,160 @@ def solve(u_vals, t_vals, B_val, cfg):
         print(t_sol)
         print(u)
 
-
-
-
-        print(f"Iteration {iteration} → Master: {master_val:.4f}, Follower: {follower_val:.4f}")
         
+
+
+
+
+       # ----- log d’itération synthétique -----
+        gap = follower_val - master_val
+        
+        wandb.log({
+             "iteration": iteration,
+             "master_val": master_val,
+             "follower_val": follower_val,
+             "gap": gap,
+         })
+        
+        print(
+            f"Iteration {iteration} → "
+            f"Master: {master_val:.6f}, "
+            f"Follower(seq): {follower_val:.6f}, "
+            #f"Follower(analytic): {follower_val_t_an:.6f}, "
+            f"Gap: {gap:+.6f}"
+        )
+        cut_added = False
         # Vérifie faisabilité bilevel
-        if follower_val > master_val:
+        if follower_val > master_val + tolerance:
             print("→ Adding new constraint from follower.")
-            master += L >= follower_val
-        else:
-            print("→ Bilevel feasible solution found.")
+            master += pl.lpSum(u[i] * x[i] - s[i] for i in indices) >= follower_val
+            cut_added = True          # ← NEW
+            no_cut_streak = 0         # ← NEW (reset)
+
+        elif abs(follower_val - master_val) <= tolerance:
+            print("→ Convergence reached (follower == master within tolerance).")
             break
 
+        if not cut_added:
+            no_cut_streak += 1
+
+        if no_cut_streak >= 5:
+            msg = f"❌ 5 iterations sans nouvelle coupe – run marqué invalide."
+            print(msg)
+
+            wandb.run.summary["valid"] = False     # tag dans le résumé
+            wandb.run.summary["reason"] = "no_new_cuts_15"
+
+            # termine le run avec exit_code ≠ 0 pour que le sweep l’ignore
+            wandb.finish(exit_code=1)
+
+            # lève une exception pour stopper proprement le script
+            raise RuntimeError(msg)
+
+
+    return master_val, follower_val, iteration, start_time
 
 
 
-def train_model(u_vals, t_vals, B_val, epochs, batch_size, actor, critic, device):
+
+def train_model(u_vals, t_vals, B_val, epochs, batch_size, actor, critic, optimizer_ac, optimizer_cr, device):
     print(f"🚀 Starting training on device: {device} for {epochs} epochs\n")
     # training loop
     global_step = 0
 
-    u_tensor, t_tensor, B_tensor, num_items = prepare_tensors(u_vals, t_vals, B_val, batch_size, device)
-    
-    for epoch in range(1, epochs + 1):
+    u_tensor, t_tensor, B_tensor, num_items = prepare_tensors(u_vals, t_vals, B_val, batch_size, device) # tensor size ([num_items])
 
-        logp_cand, selected_cand = actor.generate_trajectories(B_tensor, u_tensor, t_tensor, batch_size, num_items, device)
-        print(logp_cand.shape, logp_cand)
-        print(selected_cand.shape, selected_cand)
-        exit()
-        optimizer.zero_grad()
+    best_reward = -float("inf")
+    best_sequence = None
 
-        # generate trajectories
-        seq_logp, selected = actor.generate_trajectories(B, u, t,
-                                                          cfg.batch_size,
-                                                          num_items,
-                                                          device)
-        reward = compute_reward(selected, u, t, B)
+# Boucle principale avec barre de progression
+    progress = trange(1, epochs + 1, desc="Training", unit="epoch")
+    for epoch in progress:
+        optimizer_ac.zero_grad(set_to_none=True)
+        optimizer_cr.zero_grad(set_to_none=True)
 
-        # predict logZ
-        logZ_pred = critic(selected, B, u, t)
+        log_Z_cand = critic(B_tensor, u_tensor, t_tensor)
 
-        # TB loss
-        tb_loss = compute_loss(seq_logp, reward, logZ_pred)
+        # Génération de trajectoires
+        logp_cand, selected_cand = actor.generate_trajectories(
+            B_tensor.expand(batch_size, 1),
+            u_tensor.expand(batch_size, -1),
+            t_tensor.expand(batch_size, -1),
+            batch_size,
+            num_items,
+            device,
+        )
 
-        # Benders penalty
-        penalty = torch.tensor(0.0, device=device)
-        util = ((u - t) * ((selected + 1) / 2)).sum(dim=1)
-        for alpha, beta in cuts:
-            violation = torch.relu(util - beta)
-            penalty = penalty + violation.mean()
-        total_loss = tb_loss + cfg.penalty_weight * penalty
+        reward = compute_reward(selected_cand, u_tensor, t_tensor, B_tensor, num_items)
+        loss = compute_loss(logp_cand, reward, log_Z_cand)
 
-        # backward & step
-        total_loss.backward()
-        optimizer.step()
+        loss.backward()
 
-        # logging
-        if epoch % cfg.log_interval == 0:
-            avg_reward = reward.mean().item()
-            writer.add_scalar('Loss/TB', tb_loss.item(), epoch)
-            writer.add_scalar('Loss/Total', total_loss.item(), epoch)
-            writer.add_scalar('Reward/Avg', avg_reward, epoch)
-            writer.add_scalar('Penalty', penalty.item(), epoch)
+        optimizer_ac.step()
+        optimizer_cr.step()
 
-        # generate new cut periodically
-        if cfg.cut_interval and epoch % cfg.cut_interval == 0:
-            new_cut = benders_master(u_vals, t_vals, B_val, cuts)
-            if new_cut:
-                cuts.append(new_cut)
+        # Stats pour la barre de progression
+        batch_max_reward, max_idx = reward.max(dim=0)
+        if batch_max_reward.item() > best_reward:
+            best_reward = batch_max_reward.item()
+            # convertit : -1 → 0, 1 → 1
+            best_sequence = (selected_cand[max_idx]
+                             .detach()
+                             .cpu()
+                             .clone())
+            best_sequence[best_sequence == -1] = 0  # remap
 
-    writer.close()
-    return actor, critic, cuts
+        progress.set_postfix(
+            loss=loss.item(),
+            batch_max_reward=batch_max_reward.item(),
+            best_reward=best_reward,
+        )
+
+        wandb.log({
+             "epoch": epoch,
+             "loss": loss.item(),
+             "batch_max_reward": batch_max_reward.item(),
+             "best_reward_running": best_reward,
+             "z": log_Z_cand.item(),
+         })
+
+    print("\n🏁 Training finished")
+    print(f"✨ Best reward: {best_reward}")
+    print(f"🧩 Best sequence: {best_sequence.tolist()}")
+
+    # --- conversion en NumPy -----------------------------
+    best_reward_np   = np.asarray(best_reward, dtype=np.float32)   # shape ()
+    best_sequence_np = best_sequence.numpy().astype(np.int8)       # shape (num_items,)
+    # ------------------------------------------------------
+
+    return best_reward_np, best_sequence_np
+
 
 
 def prepare_tensors(u: np.ndarray, t: np.ndarray, B: np.ndarray, batch_size: int, device) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
     """Expand 1‑D data arrays to batched tensors on the chosen *device*."""
-    u_tensor = torch.tensor(u, dtype=torch.float32, device=device).expand(batch_size, -1)
-    t_tensor = torch.tensor(t, dtype=torch.float32, device=device).expand(batch_size, -1)
-    B_tensor = torch.tensor(B, dtype=torch.float32, device=device).view(1, 1).expand(batch_size, 1)
-    return u_tensor.detach(), t_tensor.detach(), B_tensor.detach(), u_tensor.size(1)
+    u_tensor = torch.tensor(u, dtype=torch.float32, device=device).unsqueeze(0)
+    t_tensor = torch.tensor(t, dtype=torch.float32, device=device).unsqueeze(0)
+    B_tensor = torch.tensor(B, dtype=torch.float32, device=device).view(1, 1)#.expand(batch_size, 1)
+    return u_tensor.detach(), t_tensor.detach(), B_tensor.detach(), u_tensor.shape[1]
 
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Bi-level GFlowNet Training")
+    parser.add_argument('--wandb_project', type=str, default='Bi-level GFlowNet Training')
+
     parser.add_argument('--data_path', type=str, default='data/data.pickle')
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--num_epochs', type=int, default=300)
+    parser.add_argument('--num_epochs', type=int, default=50)
     parser.add_argument('--embedding_dim', type=int, default=150)
     parser.add_argument('--hidden_dim', type=int, default=360)
     
     parser.add_argument('--lr_ac', type=float, default=1e-3)
     parser.add_argument('--lr_cr', type=float, default=1e-3)
+
+    parser.add_argument('--mom_ac', type=float, default=0.8)
+    parser.add_argument('--mom_cr', type=float, default=0.5)
 
     parser.add_argument('--penalty_weight', type=float, default=1.0)
     parser.add_argument('--cut_interval', type=int, default=50)
@@ -273,6 +338,9 @@ if __name__ == '__main__':
     parser.add_argument('--model_version', type=str, default='v1')
     cfg = parser.parse_args()
 
+    # Init W&B ---------------------------------------------------------
+    wandb.init(project=cfg.wandb_project, config=vars(cfg))
+    
     # load instance
     if not Path(cfg.data_path).exists():
         raise FileNotFoundError(f"Instance file not found: {cfg.data_path}")
@@ -280,4 +348,11 @@ if __name__ == '__main__':
         data = pickle.load(f)
     u_vals, t_vals, B_val = data['u'], data['t'], data['B']
 
-    solve(u_vals, t_vals, B_val, cfg)
+    master_val, follower_val, iteration, start_time = solve(u_vals, t_vals, B_val, cfg)
+
+    print("\n✅ Experiment finished → "
+           f"master_val={master_val:.4f}, follower_val={follower_val:.4f}, iterations={iteration}")
+    elapsed = time.time() - start_time   # ← NEW
+    wandb.log({"master_final": master_val, "follower_final": follower_val, "iterations": iteration, "runtime_sec": elapsed})
+    wandb.finish()
+

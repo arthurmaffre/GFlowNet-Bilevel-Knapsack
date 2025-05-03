@@ -1,0 +1,42 @@
+{
+  "os": "macOS-15.4.1-arm64-arm-64bit-Mach-O",
+  "python": "CPython 3.13.2",
+  "startedAt": "2025-05-02T22:22:23.266957Z",
+  "program": "/Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/train.py",
+  "git": {
+    "remote": "https://github.com/arthurmaffre/GFlowNet-Bilevel-Knapsack.git",
+    "commit": "b87df075e2a3c90f90f251b9c1f05e7d60e853e4"
+  },
+  "email": "maffrearthur@gmail.com",
+  "root": "/Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique",
+  "host": "86:bd:cc:fb:1d:21",
+  "executable": "/Users/arthur/miniconda3/envs/GFlowNet-Knapsack-Actor-Critic/bin/python",
+  "cpu_count": 8,
+  "cpu_count_logical": 8,
+  "disk": {
+    "/": {
+      "total": "900000120832",
+      "used": "398986121216"
+    },
+    "/System/Volumes/Data": {
+      "total": "900000120832",
+      "used": "398986121216"
+    }
+  },
+  "memory": {
+    "total": "17179869184"
+  },
+  "cpu": {
+    "count": 8,
+    "countLogical": 8
+  },
+  "apple": {
+    "name": "Apple M2",
+    "ecpuCores": 4,
+    "pcpuCores": 4,
+    "gpuCores": 10,
+    "memoryGb": 16,
+    "swapTotalBytes": "2147483648",
+    "ramTotalBytes": "17179869184"
+  }
+}

@@ -1,0 +1,1 @@
+{"epoch": 46, "loss": 0.8975135684013367, "batch_max_reward": 473.6640625, "best_reward_running": 563.0, "z": 14.561455726623535, "_timestamp": 1746229629.113672, "_runtime": 37.5045280456543, "_step": 94, "iteration": 2, "master_val": 563.0, "follower_val": 563.0, "gap": 0.0, "master_final": 563.0, "follower_final": 563.0, "iterations": 2, "_wandb": {"runtime": 37}}

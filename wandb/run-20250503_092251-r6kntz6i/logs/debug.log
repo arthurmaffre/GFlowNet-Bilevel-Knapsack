@@ -1,0 +1,23 @@
+2025-05-03 09:22:51,765 INFO    MainThread:1142 [wandb_setup.py:_flush():68] Current SDK version is 0.19.10
+2025-05-03 09:22:51,765 INFO    MainThread:1142 [wandb_setup.py:_flush():68] Configure stats pid to 1142
+2025-05-03 09:22:51,765 INFO    MainThread:1142 [wandb_setup.py:_flush():68] Loading settings from /Users/arthur/.config/wandb/settings
+2025-05-03 09:22:51,765 INFO    MainThread:1142 [wandb_setup.py:_flush():68] Loading settings from /Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/wandb/settings
+2025-05-03 09:22:51,765 INFO    MainThread:1142 [wandb_setup.py:_flush():68] Loading settings from environment variables
+2025-05-03 09:22:51,765 INFO    MainThread:1142 [wandb_init.py:setup_run_log_directory():724] Logging user logs to /Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/wandb/run-20250503_092251-r6kntz6i/logs/debug.log
+2025-05-03 09:22:51,765 INFO    MainThread:1142 [wandb_init.py:setup_run_log_directory():725] Logging internal logs to /Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/wandb/run-20250503_092251-r6kntz6i/logs/debug-internal.log
+2025-05-03 09:22:51,765 INFO    MainThread:1142 [wandb_init.py:init():852] calling init triggers
+2025-05-03 09:22:51,765 INFO    MainThread:1142 [wandb_init.py:init():857] wandb.init called with sweep_config: {}
+config: {'wandb_project': 'Bi-level GFlowNet Training', 'data_path': 'data/instance.parquet', 'batch_size': 128, 'num_epochs': 50, 'embedding_dim': 150, 'hidden_dim': 360, 'lr_ac': 0.001, 'lr_cr': 0.001, 'mom_ac': 0.8, 'mom_cr': 0.5, 'penalty_weight': 1.0, 'cut_interval': 50, 'log_interval': 10, 'log_dir': 'runs', 'model_version': 'v1', '_wandb': {}}
+2025-05-03 09:22:51,766 INFO    MainThread:1142 [wandb_init.py:init():893] starting backend
+2025-05-03 09:22:51,766 INFO    MainThread:1142 [wandb_init.py:init():897] sending inform_init request
+2025-05-03 09:22:51,791 INFO    MainThread:1142 [backend.py:_multiprocessing_setup():101] multiprocessing start_methods=spawn,fork,forkserver, using: spawn
+2025-05-03 09:22:51,791 INFO    MainThread:1142 [wandb_init.py:init():907] backend started and connected
+2025-05-03 09:22:51,792 INFO    MainThread:1142 [wandb_init.py:init():1002] updated telemetry
+2025-05-03 09:22:51,804 INFO    MainThread:1142 [wandb_init.py:init():1026] communicating run to backend with 90.0 second timeout
+2025-05-03 09:22:52,149 INFO    MainThread:1142 [wandb_init.py:init():1101] starting run threads in backend
+2025-05-03 09:22:52,183 INFO    MainThread:1142 [wandb_run.py:_console_start():2566] atexit reg
+2025-05-03 09:22:52,183 INFO    MainThread:1142 [wandb_run.py:_redirect():2414] redirect: wrap_raw
+2025-05-03 09:22:52,183 INFO    MainThread:1142 [wandb_run.py:_redirect():2483] Wrapping output streams.
+2025-05-03 09:22:52,184 INFO    MainThread:1142 [wandb_run.py:_redirect():2506] Redirects installed.
+2025-05-03 09:22:52,185 INFO    MainThread:1142 [wandb_init.py:init():1147] run started, returning control to user process
+2025-05-03 09:22:52,267 INFO    MsgRouterThr:1142 [mailbox.py:close():129] [no run ID] Closing mailbox, abandoning 1 handles.

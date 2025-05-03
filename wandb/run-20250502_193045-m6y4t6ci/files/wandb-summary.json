@@ -1,0 +1,1 @@
+{"_step":395,"batch_max_reward":499.2578125,"epoch":39,"master_val":567.4765626,"iteration":7,"loss":4.250899791717529,"follower_val":542.44140635,"gap":-25.03515625,"z":14.798008918762207,"_timestamp":1.7462286817456808e+09,"_runtime":36.314374,"_wandb":{"runtime":36},"best_reward_running":537.1875}

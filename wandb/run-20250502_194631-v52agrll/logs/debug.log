@@ -1,0 +1,30 @@
+2025-05-02 19:46:31,565 INFO    MainThread:73180 [wandb_setup.py:_flush():68] Current SDK version is 0.19.10
+2025-05-02 19:46:31,565 INFO    MainThread:73180 [wandb_setup.py:_flush():68] Configure stats pid to 73180
+2025-05-02 19:46:31,565 INFO    MainThread:73180 [wandb_setup.py:_flush():68] Loading settings from /Users/arthur/.config/wandb/settings
+2025-05-02 19:46:31,565 INFO    MainThread:73180 [wandb_setup.py:_flush():68] Loading settings from /Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/wandb/settings
+2025-05-02 19:46:31,565 INFO    MainThread:73180 [wandb_setup.py:_flush():68] Loading settings from environment variables
+2025-05-02 19:46:31,566 INFO    MainThread:73180 [wandb_init.py:setup_run_log_directory():724] Logging user logs to /Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/wandb/run-20250502_194631-v52agrll/logs/debug.log
+2025-05-02 19:46:31,566 INFO    MainThread:73180 [wandb_init.py:setup_run_log_directory():725] Logging internal logs to /Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/wandb/run-20250502_194631-v52agrll/logs/debug-internal.log
+2025-05-02 19:46:31,566 INFO    MainThread:73180 [wandb_init.py:init():852] calling init triggers
+2025-05-02 19:46:31,566 INFO    MainThread:73180 [wandb_init.py:init():857] wandb.init called with sweep_config: {'batch_size': 178, 'data_path': 'data/data.pickle', 'embedding_dim': 194, 'hidden_dim': 592, 'lr_ac': 0.004529744272741297, 'lr_cr': 0.0004300775444573172, 'mom_ac': 0.5996050118614881, 'mom_cr': 0.6517834429324416, 'num_epochs': 46}
+config: {'wandb_project': 'Bi-level GFlowNet Training', 'data_path': 'data/data.pickle', 'batch_size': 178, 'num_epochs': 46, 'embedding_dim': 194, 'hidden_dim': 592, 'lr_ac': 0.004529744272741297, 'lr_cr': 0.0004300775444573172, 'mom_ac': 0.5996050118614881, 'mom_cr': 0.6517834429324416, 'penalty_weight': 1.0, 'cut_interval': 50, 'log_interval': 10, 'log_dir': 'runs', 'model_version': 'v1', '_wandb': {}}
+2025-05-02 19:46:31,566 INFO    MainThread:73180 [wandb_init.py:init():893] starting backend
+2025-05-02 19:46:31,566 INFO    MainThread:73180 [wandb_init.py:init():897] sending inform_init request
+2025-05-02 19:46:31,608 INFO    MainThread:73180 [backend.py:_multiprocessing_setup():101] multiprocessing start_methods=spawn,fork,forkserver, using: spawn
+2025-05-02 19:46:31,608 INFO    MainThread:73180 [wandb_init.py:init():907] backend started and connected
+2025-05-02 19:46:31,610 INFO    MainThread:73180 [wandb_run.py:_config_callback():1429] config_cb None None {'batch_size': 178, 'data_path': 'data/data.pickle', 'embedding_dim': 194, 'hidden_dim': 592, 'lr_ac': 0.004529744272741297, 'lr_cr': 0.0004300775444573172, 'mom_ac': 0.5996050118614881, 'mom_cr': 0.6517834429324416, 'num_epochs': 46}
+2025-05-02 19:46:31,612 INFO    MainThread:73180 [wandb_init.py:init():1002] updated telemetry
+2025-05-02 19:46:31,637 INFO    MainThread:73180 [wandb_init.py:init():1026] communicating run to backend with 90.0 second timeout
+2025-05-02 19:46:32,110 INFO    MainThread:73180 [wandb_init.py:init():1101] starting run threads in backend
+2025-05-02 19:46:35,571 INFO    MainThread:73180 [wandb_run.py:_console_start():2566] atexit reg
+2025-05-02 19:46:35,572 INFO    MainThread:73180 [wandb_run.py:_redirect():2414] redirect: wrap_raw
+2025-05-02 19:46:35,572 INFO    MainThread:73180 [wandb_run.py:_redirect():2483] Wrapping output streams.
+2025-05-02 19:46:35,572 INFO    MainThread:73180 [wandb_run.py:_redirect():2506] Redirects installed.
+2025-05-02 19:46:35,574 INFO    MainThread:73180 [wandb_init.py:init():1147] run started, returning control to user process
+2025-05-02 19:47:09,114 INFO    MainThread:73180 [wandb_run.py:_finish():2314] finishing run arthurmaffre-alone/projet Avec critique/v52agrll
+2025-05-02 19:47:09,117 INFO    MainThread:73180 [wandb_run.py:_atexit_cleanup():2531] got exitcode: 0
+2025-05-02 19:47:09,118 INFO    MainThread:73180 [wandb_run.py:_restore():2513] restore
+2025-05-02 19:47:09,118 INFO    MainThread:73180 [wandb_run.py:_restore():2519] restore done
+2025-05-02 19:47:12,948 INFO    MainThread:73180 [wandb_run.py:_footer_history_summary_info():4160] rendering history
+2025-05-02 19:47:12,954 INFO    MainThread:73180 [wandb_run.py:_footer_history_summary_info():4192] rendering summary
+2025-05-02 19:47:12,955 INFO    MainThread:73180 [wandb_run.py:_footer_sync_info():4121] logging synced files

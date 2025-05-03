@@ -1,0 +1,55 @@
+{
+    "os": "macOS-15.4.1-arm64-arm-64bit-Mach-O",
+    "python": "CPython 3.13.2",
+    "heartbeatAt": "2025-05-02T23:45:04.656037",
+    "startedAt": "2025-05-02T23:45:04.139947",
+    "docker": null,
+    "args": [
+        "service",
+        "--debug",
+        "--port-filename",
+        "/var/folders/3d/px25gn9n1cg8clmw10nxnsg00000gn/T/tmpp9mip5jn/port-73031.txt",
+        "--pid",
+        "73031"
+    ],
+    "state": "running",
+    "program": "/Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir a\u0300 rendre/projet Avec critique/train.py",
+    "codePathLocal": "train.py",
+    "codePath": "train.py",
+    "git": {
+        "remote": "https://github.com/arthurmaffre/GFlowNet-Bilevel-Knapsack.git",
+        "commit": "b87df075e2a3c90f90f251b9c1f05e7d60e853e4"
+    },
+    "email": "maffrearthur@gmail.com",
+    "root": "/Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir a\u0300 rendre/projet Avec critique",
+    "host": "86:bd:cc:fb:1d:21",
+    "username": null,
+    "executable": "/Users/arthur/miniconda3/envs/GFlowNet-Knapsack-Actor-Critic/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 3504,
+        "min": 600,
+        "max": 3504
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3504,
+            "min": 600,
+            "max": 3504
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 900000120832,
+            "used": 11243466752
+        },
+        "/System/Volumes/Data": {
+            "total": 900000120832,
+            "used": 377449410560
+        }
+    },
+    "memory": {
+        "total": 17179869184
+    }
+}
