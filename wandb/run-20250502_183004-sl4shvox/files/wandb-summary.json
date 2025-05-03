@@ -1,1 +1,0 @@
-{"epoch":50,"_wandb":{"runtime":13},"master_final":404.1015625,"master_val":404.1015625,"_runtime":13.360912,"follower_final":404.1015625,"follower_val":404.1015625,"loss":2.1662893295288086,"iterations":3,"gap":0,"_step":153,"z":13.294809341430664,"_timestamp":1.7462250178704371e+09,"iteration":3,"best_reward_running":404.1015625,"batch_max_reward":363.73828125}

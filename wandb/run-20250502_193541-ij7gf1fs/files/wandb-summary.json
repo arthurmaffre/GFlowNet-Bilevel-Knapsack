@@ -1,1 +1,0 @@
-{"epoch": 86, "loss": NaN, "batch_max_reward": 689.0078125, "best_reward_running": 689.0078125, "z": -501637.28125, "_timestamp": 1746229122.106285, "_runtime": 180.32358407974243, "_step": 521, "iteration": 6, "master_val": 832.0, "follower_val": 689.0078125, "gap": -142.9921875, "valid": false, "reason": "no_new_cuts_15", "_wandb": {"runtime": 180}}

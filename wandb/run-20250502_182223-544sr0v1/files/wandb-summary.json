@@ -1,1 +1,0 @@
-{"iteration":3,"_timestamp":1.7462245567602298e+09,"_runtime":13.493332,"master_val":403,"_wandb":{"runtime":14},"loss":1.0912559032440186,"_step":152,"epoch":50,"batch_max_reward":403,"follower_val":403,"best_reward_running":403,"gap":0}

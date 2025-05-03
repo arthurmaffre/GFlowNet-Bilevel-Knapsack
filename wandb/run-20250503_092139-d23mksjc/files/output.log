@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/train.py", line 355, in <module>
-    master_val, follower_val, iteration, start_time = solve(u_vals, t_vals, B_val, cfg)
-                                                      ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/train.py", line 85, in solve
-    u = np.array(data["u"], dtype=np.float32).flatten()
-                 ^^^^
-NameError: name 'data' is not defined

@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/Users/arthur/Library/Mobile Documents/com~apple~CloudDocs/Cours/ECN6338/Devoir à rendre/projet Avec critique/train.py", line 345, in <module>
-    raise FileNotFoundError(f"Instance file not found: {cfg.data_path}")
-FileNotFoundError: Instance file not found: data/data.parquet
