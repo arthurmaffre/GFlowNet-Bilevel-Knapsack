@@ -10,7 +10,7 @@ def compute_reward(selected, u, t, B, num_items):
     """
     B_flat = B.view(-1)
     # Convertir selected en binaire : -1 -> 0, 1 -> 1
-    
+
     selected_binary = (selected > 0).to(torch.float32)
 
     # Calculer le coût total pour chaque trajectoire

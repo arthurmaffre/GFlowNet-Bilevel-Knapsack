@@ -92,6 +92,8 @@ class GFlowNet(nn.Module):
             new_sel[:, i] = act * 2 - 1
             selected = new_sel
             remaining_B = remaining_B - (act * t[:, i]).unsqueeze(1)
+
+
         return logp_acc, selected
 
 
@@ -158,3 +160,4 @@ def compute_loss(
     log_r = torch.log(reward.clamp_min(1e-6))
     diff = torch.clamp(sequence_logp + logZ_pred - log_r, min=-100.0, max=100.0)
     return diff.square().mean()
+

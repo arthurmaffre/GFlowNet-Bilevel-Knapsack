@@ -1,9 +1,5 @@
 program: train.py
 command:
-  - conda
-  - run
-  - -n
-  - GFlowNet-Knapsack-Actor-Critic
   - python
   - ${program}
   - ${args}
@@ -20,27 +16,74 @@ parameters:
     min: 32
     max: 180
     distribution: int_uniform
-  data_path:
-    value: "data/data.pickle"
-  lr_cr:
-    min: 0.0003
-    max: 0.02
-    distribution: log_uniform_values
+
+  # ------------------------------------
+  # learning rates & momentum
+  # ------------------------------------
   lr_ac:
     min: 0.001
     max: 0.03
     distribution: log_uniform_values
+  lr_cr:
+    min: 0.0003
+    max: 0.02
+    distribution: log_uniform_values
+
   mom_ac:
     min: 0.05
     max: 0.95
   mom_cr:
     min: 0.05
     max: 0.95
-  embedding_dim:
+
+  # ------------------------------------
+  # hidden dimensions
+  # ------------------------------------
+  hidden_dim_ac:
+    min: 150
+    max: 750
+    distribution: int_uniform
+  hidden_dim_cr:
+    min: 150
+    max: 750
+    distribution: int_uniform
+
+  # ------------------------------------
+  # actor embeddings
+  # ------------------------------------
+  embedding_dim_ac_sel:
     min: 100
     max: 350
     distribution: int_uniform
-  hidden_dim:
-    min: 150
-    max: 750
+  embedding_dim_ac_B:
+    min: 100
+    max: 350
+    distribution: int_uniform
+  embedding_dim_ac_u:
+    min: 100
+    max: 350
+    distribution: int_uniform
+  embedding_dim_ac_t:
+    min: 100
+    max: 350
+    distribution: int_uniform
+
+  # ------------------------------------
+  # critic embeddings
+  # ------------------------------------
+  embedding_dim_cr_sel:
+    min: 100
+    max: 350
+    distribution: int_uniform
+  embedding_dim_cr_B:
+    min: 100
+    max: 350
+    distribution: int_uniform
+  embedding_dim_cr_u:
+    min: 100
+    max: 350
+    distribution: int_uniform
+  embedding_dim_cr_t:
+    min: 100
+    max: 350
     distribution: int_uniform

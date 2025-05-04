@@ -55,13 +55,15 @@ import time
 # Local imports – keep them grouped for clarity
 # ────────────────────────────────────────────────────────────────────────────────
 
-from models.GFlowNet_v1 import Critic, compute_loss, GFlowNet as GFlownetv3 
+from models.GFlowNet_v1 import compute_loss, GFlowNet as GFlownet_v1
+from models.GFlowNet_v2 import Critic, GFlowNetVector as GFlownet_v2
 from reward.reward import compute_reward
 from solver.solver_with_traj import compute_analytical_reward
 
 # Mapping from CLI flag to concrete class
 MODEL_MAP = {
-    "v1": GFlownetv3,
+    "v1": GFlownet_v1,
+    "v2": GFlownet_v2,
 }
 # ────────────────────────────────────────────────────────────────────────────────
 # Utility helpers
@@ -82,6 +84,9 @@ def select_device() -> torch.device:
 def solve(u_vals, t_vals, B_val, cfg):
     # device
     device = select_device()
+    #device = torch.device("cpu")
+
+    print(device)
 
     u = np.array(data["u"], dtype=np.float32).flatten()
     t = np.array(data["t"], dtype=np.float32).flatten()
@@ -93,13 +98,27 @@ def solve(u_vals, t_vals, B_val, cfg):
 
     # instantiate models once
     ModelCls = MODEL_MAP[cfg.model_version]
-    actor = ModelCls(num_items=num_items,
-                     embedding_dim=cfg.embedding_dim,
-                     hidden_dim=cfg.hidden_dim).to(device)
+    actor = ModelCls(
+        num_items=num_items,
+        embedding_dim_ac_sel=cfg.embedding_dim_ac_sel,
+        embedding_dim_ac_B  =cfg.embedding_dim_ac_B,
+        embedding_dim_ac_u  =cfg.embedding_dim_ac_u,
+        embedding_dim_ac_t  =cfg.embedding_dim_ac_t,
+        hidden_dim_ac       =cfg.hidden_dim_ac,
+    ).to(device)
     
-    critic = Critic(num_items=num_items,
-                    embedding_dim=cfg.embedding_dim,
-                    hidden_dim=cfg.hidden_dim).to(device)
+    critic = Critic(
+        num_items=num_items,
+        embedding_dim_cr_sel=cfg.embedding_dim_cr_sel,
+        embedding_dim_cr_B  =cfg.embedding_dim_cr_B,
+        embedding_dim_cr_u  =cfg.embedding_dim_cr_u,
+        embedding_dim_cr_t  =cfg.embedding_dim_cr_t,
+        hidden_dim_cr       =cfg.hidden_dim_cr,
+    ).to(device)
+    
+    #actor  = torch.compile(actor)
+    #critic = torch.compile(critic)
+
 
     # optimizers
     optimizer_ac = torch.optim.SGD(actor.parameters(), lr=cfg.lr_ac, momentum=cfg.mom_ac)
@@ -161,20 +180,6 @@ def solve(u_vals, t_vals, B_val, cfg):
         master_val = np.sum((u - t_sol) * x_sol)
         
         follower_val = np.sum((u - t_sol) * x_hat_sol)
-        print("-------------")
-        print(follower_val)
-        print(follower_val_t)
-        print(master_val)
-        print(L.varValue)
-
-        print("-------------")
-        print(x_hat_sol)
-        print(x_sol)
-
-        print("-------------")
-        print(t_sol)
-        print(u)
-
         
 
 
@@ -234,7 +239,6 @@ def solve(u_vals, t_vals, B_val, cfg):
 def train_model(u_vals, t_vals, B_val, epochs, batch_size, actor, critic, optimizer_ac, optimizer_cr, device):
     print(f"🚀 Starting training on device: {device} for {epochs} epochs\n")
     # training loop
-    global_step = 0
 
     u_tensor, t_tensor, B_tensor, num_items = prepare_tensors(u_vals, t_vals, B_val, batch_size, device) # tensor size ([num_items])
 
@@ -251,9 +255,9 @@ def train_model(u_vals, t_vals, B_val, epochs, batch_size, actor, critic, optimi
 
         # Génération de trajectoires
         logp_cand, selected_cand = actor.generate_trajectories(
-            B_tensor.expand(batch_size, 1),
-            u_tensor.expand(batch_size, -1),
-            t_tensor.expand(batch_size, -1),
+            B_tensor.expand(batch_size, 1).detach(),
+            u_tensor.expand(batch_size, -1).detach(),
+            t_tensor.expand(batch_size, -1).detach(),
             batch_size,
             num_items,
             device,
@@ -268,29 +272,30 @@ def train_model(u_vals, t_vals, B_val, epochs, batch_size, actor, critic, optimi
         optimizer_cr.step()
 
         # Stats pour la barre de progression
-        batch_max_reward, max_idx = reward.max(dim=0)
-        if batch_max_reward.item() > best_reward:
-            best_reward = batch_max_reward.item()
-            # convertit : -1 → 0, 1 → 1
-            best_sequence = (selected_cand[max_idx]
-                             .detach()
-                             .cpu()
-                             .clone())
-            best_sequence[best_sequence == -1] = 0  # remap
+        with torch.no_grad():
+            batch_max_reward, max_idx = reward.max(dim=0)
+            if batch_max_reward.item() > best_reward:
+                best_reward = batch_max_reward.item()
+                # convertit : -1 → 0, 1 → 1
+                best_sequence = (selected_cand[max_idx]
+                                .detach()
+                                .cpu()
+                                .clone())
+                best_sequence[best_sequence == -1] = 0  # remap
 
-        progress.set_postfix(
-            loss=loss.item(),
-            batch_max_reward=batch_max_reward.item(),
-            best_reward=best_reward,
-        )
+            progress.set_postfix(
+                loss=loss.item(),
+                batch_max_reward=batch_max_reward.item(),
+                best_reward=best_reward,
+            )
 
-        wandb.log({
-             "epoch": epoch,
-             "loss": loss.item(),
-             "batch_max_reward": batch_max_reward.item(),
-             "best_reward_running": best_reward,
-             "z": log_Z_cand.item(),
-         })
+            wandb.log({
+                "epoch": epoch,
+                "loss": loss.item(),
+                "batch_max_reward": batch_max_reward.item(),
+                "best_reward_running": best_reward,
+                "z": log_Z_cand.item(),
+            })
 
     print("\n🏁 Training finished")
     print(f"✨ Best reward: {best_reward}")
@@ -307,9 +312,9 @@ def train_model(u_vals, t_vals, B_val, epochs, batch_size, actor, critic, optimi
 
 def prepare_tensors(u: np.ndarray, t: np.ndarray, B: np.ndarray, batch_size: int, device) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
     """Expand 1‑D data arrays to batched tensors on the chosen *device*."""
-    u_tensor = torch.tensor(u, dtype=torch.float32, device=device).unsqueeze(0)
-    t_tensor = torch.tensor(t, dtype=torch.float32, device=device).unsqueeze(0)
-    B_tensor = torch.tensor(B, dtype=torch.float32, device=device).view(1, 1)#.expand(batch_size, 1)
+    u_tensor = torch.tensor(u, dtype=torch.float32, device=device).unsqueeze(0).contiguous()
+    t_tensor = torch.tensor(t, dtype=torch.float32, device=device).unsqueeze(0).contiguous()
+    B_tensor = torch.tensor(B, dtype=torch.float32, device=device).view(1, 1).contiguous()
     return u_tensor.detach(), t_tensor.detach(), B_tensor.detach(), u_tensor.shape[1]
 
 
@@ -320,10 +325,25 @@ if __name__ == '__main__':
 
     parser.add_argument('--data_path', type=str, default='data/data.pickle')
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--num_epochs', type=int, default=50)
-    parser.add_argument('--embedding_dim', type=int, default=150)
-    parser.add_argument('--hidden_dim', type=int, default=360)
     
+    parser.add_argument('--num_epochs', type=int, default=50)
+    
+    parser.add_argument('--hidden_dim_ac', type=int, default=150)
+    parser.add_argument('--hidden_dim_cr', type=int, default=150)
+
+    parser.add_argument('--embedding_dim_ac_sel', type=int, default=150)
+    parser.add_argument('--embedding_dim_cr_sel', type=int, default=150)
+
+    parser.add_argument('--embedding_dim_ac_B', type=int, default=150)
+    parser.add_argument('--embedding_dim_cr_B', type=int, default=150)
+
+    parser.add_argument('--embedding_dim_ac_u', type=int, default=150)
+    parser.add_argument('--embedding_dim_cr_u', type=int, default=150)
+
+    parser.add_argument('--embedding_dim_ac_t', type=int, default=150)
+    parser.add_argument('--embedding_dim_cr_t', type=int, default=150)
+
+
     parser.add_argument('--lr_ac', type=float, default=1e-3)
     parser.add_argument('--lr_cr', type=float, default=1e-3)
 
@@ -335,7 +355,7 @@ if __name__ == '__main__':
     parser.add_argument('--log_interval', type=int, default=10)
 
     parser.add_argument('--log_dir', type=str, default='runs')
-    parser.add_argument('--model_version', type=str, default='v1')
+    parser.add_argument('--model_version', type=str, default='v2')
     cfg = parser.parse_args()
 
     # Init W&B ---------------------------------------------------------
