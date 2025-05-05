@@ -40,50 +40,50 @@ parameters:
   # hidden dimensions
   # ------------------------------------
   hidden_dim_ac:
-    min: 150
-    max: 750
+    min: 10
+    max: 300
     distribution: int_uniform
   hidden_dim_cr:
-    min: 150
-    max: 750
+    min: 10
+    max: 300
     distribution: int_uniform
 
   # ------------------------------------
   # actor embeddings
   # ------------------------------------
   embedding_dim_ac_sel:
-    min: 100
-    max: 350
+    min: 10
+    max: 300
     distribution: int_uniform
   embedding_dim_ac_B:
-    min: 100
-    max: 350
+    min: 10
+    max: 300
     distribution: int_uniform
   embedding_dim_ac_u:
-    min: 100
-    max: 350
+    min: 10
+    max: 300
     distribution: int_uniform
   embedding_dim_ac_t:
-    min: 100
-    max: 350
+    min: 10
+    max: 300
     distribution: int_uniform
 
   # ------------------------------------
   # critic embeddings
   # ------------------------------------
   embedding_dim_cr_sel:
-    min: 100
-    max: 350
+    min: 10
+    max: 300
     distribution: int_uniform
   embedding_dim_cr_B:
-    min: 100
-    max: 350
+    min: 10
+    max: 300
     distribution: int_uniform
   embedding_dim_cr_u:
-    min: 100
-    max: 350
+    min: 10
+    max: 300
     distribution: int_uniform
   embedding_dim_cr_t:
-    min: 100
-    max: 350
+    min: 10
+    max: 300
     distribution: int_uniform
