@@ -50,6 +50,12 @@ import numpy as np
 import pulp as pl
 import time
 
+#bayesian optimization
+from botorch.models import SingleTaskGP
+from botorch.models.model_list_gp_regression import ModelListGP
+from botorch.acquisition.analytic import ExpectedImprovement
+from botorch.optim import optimize_acqf
+
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Local imports – keep them grouped for clarity

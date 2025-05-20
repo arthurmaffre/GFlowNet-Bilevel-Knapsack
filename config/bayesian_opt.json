@@ -1,0 +1,11 @@
+{
+    "experiment_name": "GFlowNet_Bilevel_coding", //Name of the experiment, related to the name in wandb
+    "metrics": "execution_time",  //Time in seconds to run the experiement
+    "trials_per_batch": 3, //Number of experiements run at the same time
+    "epochs": 10, //Total number of epochs of the optimization (not the model itself but the hyperparameter optimization)
+
+    "parameters_space": { // type : int, float, char, bool ; bounds: tuple[float, float] ; scaling : linear, log 
+        "batch_size": {"type": "int", "bounds": [16, 512], "scaling": "linear"}, //batch_size of the model
+        "num_epochs": {"type": "int", "bounds": [16, 512], "scaling": "linear"} //num_epochs of the model
+    }
+}
